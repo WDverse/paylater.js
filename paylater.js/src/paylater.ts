@@ -1,0 +1,1 @@
+const priceEls = document.querySelectorAll('[data-paylater-amount]')
