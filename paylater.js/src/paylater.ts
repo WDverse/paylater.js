@@ -1,15 +1,15 @@
 import { splitPayment } from "./math.ts";
 
-if ((window as any).__paylater) {
+if ((window as any).__paylater) { // if flag is set, script has already run
   throw new Error('paylater.js has already been loaded. Remove the duplicate script tag.');
 }
-(window as any).__paylater = true;
+(window as any).__paylater = true; // set flag so a second load is caught
 
 const priceEls = document.querySelectorAll<HTMLElement>('[data-paylater-amount]');
 
 priceEls.forEach(el => {
-  const attr = el.dataset.paylaterAmount;
-  const amt = parseFloat(attr ?? ''); // default amt to 0 if undefined
+  const attr = el.dataset.paylaterAmount; // get data-attr in string
+  const amt = parseFloat(attr ?? ''); // convert string data-attr to a number and default value to NaN if undefined
 
   if (!attr || isNaN(amt) || amt <= 0) { // handle cases where attributes are missing, not a number or less than 0
     console.warn('paylater.js: invalid or missing data-paylater-amount on element', el);
