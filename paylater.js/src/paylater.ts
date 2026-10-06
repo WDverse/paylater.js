@@ -25,9 +25,22 @@ class PaylaterMessage extends HTMLElement {
       currency: this.getAttribute('currency') ?? 'USD', // default to USD if undefined
     });
 
+    const style = document.createElement('style');
+    style.textContent = `
+      :host {
+        display: block;
+        font-family: system-ui, sans-serif;
+        font-size: 14px;
+        color: #333;
+      }
+      p {
+        margin: 0;
+      }
+    `;
+
     const msgEl = document.createElement('p');
     msgEl.textContent = `or 4 payments of ${formatter.format(perPayment / 100)}`;
-    this.shadowRoot!.appendChild(msgEl);
+    this.shadowRoot!.append(style, msgEl);
   }
 }
 
