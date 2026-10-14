@@ -1,13 +1,27 @@
 import { splitPayment } from "./math.ts";
 
 class PaylaterMessage extends HTMLElement {
+  static get observedAttributes() {
+    return ['amount', 'currency'];
+  }
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
   }
 
   connectedCallback() {
-    if (this.shadowRoot!.hasChildNodes()) return; // guard against re-render if reconnected to the DOM
+    this._render();
+  }
+
+  attributeChangedCallback(_name: string, oldValue: string | null, newValue: string | null) {
+    if (oldValue === newValue) return; // setAttribute fires this even with an unchanged value
+    if (!this.isConnected) return; // initial parse-time firing; connectedCallback will render once attached
+    this._render();
+  }
+
+  _render() {
+    this.shadowRoot!.replaceChildren(); // clear any previous render before rebuilding
 
     const attr = this.getAttribute('amount'); // get attribute in string
     const amt = parseFloat(attr ?? ''); // convert string attribute to a number and default value to NaN if undefined
