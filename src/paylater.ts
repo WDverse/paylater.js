@@ -11,10 +11,10 @@ class PaylaterMessage extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.style.display = 'block'; // give the host real box geometry even before anything is rendered into it, so IntersectionObserver can track its position
   }
 
   connectedCallback() {
+    this.style.display = 'block'; // give the host real box geometry so IntersectionObserver can track its position; must happen after construction, since a custom element constructor must not add attributes (setting any `this.style.*` property writes the `style` attribute)
     this.#observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
