@@ -5,18 +5,38 @@ class PaylaterMessage extends HTMLElement {
     return ['amount', 'currency'];
   }
 
+  #observer: IntersectionObserver | null = null;
+  #hasRendered = false;
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this.style.display = 'block'; // give the host real box geometry even before anything is rendered into it, so IntersectionObserver can track its position
   }
 
   connectedCallback() {
-    this._render();
+    this.#observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          this.#hasRendered = true;
+          this._render();
+          this.#observer?.disconnect();
+          this.#observer = null;
+        }
+      },
+      { rootMargin: '200px' }, // start rendering slightly before it enters the viewport
+    );
+    this.#observer.observe(this);
+  }
+
+  disconnectedCallback() {
+    this.#observer?.disconnect();
+    this.#observer = null;
   }
 
   attributeChangedCallback(_name: string, oldValue: string | null, newValue: string | null) {
     if (oldValue === newValue) return; // setAttribute fires this even with an unchanged value
-    if (!this.isConnected) return; // initial parse-time firing; connectedCallback will render once attached
+    if (!this.#hasRendered) return; // not visible yet; will render with current attributes once it is
     this._render();
   }
 
@@ -42,7 +62,6 @@ class PaylaterMessage extends HTMLElement {
     const style = document.createElement('style');
     style.textContent = `
       :host {
-        display: block;
         font-family: system-ui, sans-serif;
         font-size: 14px;
         color: #333;
