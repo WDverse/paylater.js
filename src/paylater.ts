@@ -40,6 +40,15 @@ class PaylaterMessage extends HTMLElement {
     this._render();
   }
 
+  refresh() {
+    // manual escape hatch: force a render now regardless of viewport position,
+    // and promote to "rendered" state so later attribute changes keep being picked up
+    this.#hasRendered = true;
+    this.#observer?.disconnect();
+    this.#observer = null;
+    this._render();
+  }
+
   _render() {
     this.shadowRoot!.replaceChildren(); // clear any previous render before rebuilding
 
@@ -78,3 +87,26 @@ class PaylaterMessage extends HTMLElement {
 }
 
 customElements.define('paylater-message', PaylaterMessage);
+
+function refreshAll() {
+  document.querySelectorAll<PaylaterMessage>('paylater-message').forEach((el) => el.refresh());
+}
+
+// Safety net for merchants whose own price-update code never calls Paylater.refresh():
+// watch the whole document for amount/currency attribute changes on any paylater-message
+// element and refresh it automatically. Redundant with attributeChangedCallback for the
+// common case (setAttribute already triggers that), but catches it regardless of how the
+// attribute ends up changed.
+new MutationObserver((mutations) => {
+  for (const mutation of mutations) {
+    if (mutation.type === 'attributes' && mutation.target instanceof PaylaterMessage) {
+      mutation.target.refresh();
+    }
+  }
+}).observe(document.documentElement, {
+  subtree: true,
+  attributes: true,
+  attributeFilter: ['amount', 'currency'],
+});
+
+(window as any).Paylater = { refresh: refreshAll };
